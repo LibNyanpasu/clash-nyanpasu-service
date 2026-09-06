@@ -340,12 +340,15 @@ async fn graceful_respawn_loads_the_full_committed_runtime_config() {
         .build()
         .unwrap();
     let runtime = client.configs().await.expect("GET respawned config");
-    assert_eq!(runtime.port, i64::from(port));
-    assert_eq!(runtime.socks_port, i64::from(socks));
-    assert_eq!(runtime.redir_port, i64::from(redir));
-    assert_eq!(runtime.tproxy_port, i64::from(tproxy));
-    assert_eq!(runtime.mixed_port, i64::from(mixed));
-    assert!(runtime.tun.enable, "respawn must restore TUN enablement");
+    assert_eq!(runtime.port, Some(i64::from(port)));
+    assert_eq!(runtime.socks_port, Some(i64::from(socks)));
+    assert_eq!(runtime.redir_port, Some(i64::from(redir)));
+    assert_eq!(runtime.tproxy_port, Some(i64::from(tproxy)));
+    assert_eq!(runtime.mixed_port, Some(i64::from(mixed)));
+    assert!(
+        runtime.tun.expect("respawn must report TUN state").enable,
+        "respawn must restore TUN enablement"
+    );
 
     let runtime_file = std::fs::read_to_string(runtime_dir.join("config-2.yaml")).unwrap();
     assert!(runtime_file.contains(&format!("port: {port}")));

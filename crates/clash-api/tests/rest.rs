@@ -280,3 +280,52 @@ async fn rule_providers_preserve_missing_metadata_unknown_strings_and_order() {
     assert_eq!(known.vehicle_type, Some(clash_api::VehicleType::Http));
     server.abort();
 }
+
+#[tokio::test]
+async fn config_reads_preserve_absence_and_unknown_response_enums() {
+    let (address, server) = spawn_server(Router::new().route("/configs", get(|| async {
+        Json(serde_json::json!({"mode":"future-mode","log-level":"trace","mixed-port":0,"allow-lan":false}))
+    }))).await;
+    let client = Client::builder(Host::http(address).unwrap())
+        .build()
+        .unwrap();
+    let config = client.configs().await.unwrap();
+    assert_eq!(config.mode.as_ref().unwrap().as_str(), "future-mode");
+    assert_eq!(config.log_level.as_ref().unwrap().as_str(), "trace");
+    assert_eq!(config.port, None);
+    assert_eq!(config.mixed_port, Some(0));
+    assert_eq!(config.allow_lan, Some(false));
+    assert_eq!(
+        serde_json::to_value(config).unwrap(),
+        serde_json::json!({
+            "mode":"future-mode","log-level":"trace","mixed-port":0,"allow-lan":false
+        })
+    );
+    server.abort();
+}
+
+#[test]
+fn config_response_validation_does_not_widen_writes_or_subscriptions() {
+    assert!(serde_json::from_str::<clash_api::ConfigPatch>(r#"{"mode":"future-mode"}"#).is_err());
+    assert!(serde_json::from_str::<clash_api::LogLevel>(r#""trace""#).is_err());
+    for value in [
+        serde_json::json!({"mode":42}),
+        serde_json::json!({"mode":{"rule":null}}),
+        serde_json::json!({"log-level":{"info":null}}),
+        serde_json::json!({"log-level":false}),
+        serde_json::json!({"mixed-port":"zero"}),
+        serde_json::json!({"ipv6":"false"}),
+    ] {
+        assert!(serde_json::from_value::<clash_api::RuntimeConfig>(value).is_err());
+    }
+    let known: clash_api::RuntimeConfig =
+        serde_json::from_value(serde_json::json!({"mode":"rule","log-level":"info"})).unwrap();
+    assert_eq!(
+        known.mode,
+        Some(clash_api::ConfigEnum::Known(clash_api::TunnelMode::Rule))
+    );
+    assert_eq!(
+        known.log_level,
+        Some(clash_api::ConfigEnum::Known(clash_api::LogLevel::Info))
+    );
+}

@@ -355,9 +355,15 @@ async fn real_mihomo_api_and_transport_matrix() {
         .unwrap();
 
     let config = client.configs().await.unwrap();
-    assert_eq!(config.mode, TunnelMode::Rule);
-    assert_eq!(config.log_level, LogLevel::Debug);
-    assert!(!config.allow_lan);
+    assert_eq!(
+        config.mode,
+        Some(clash_api::ConfigEnum::Known(TunnelMode::Rule))
+    );
+    assert_eq!(
+        config.log_level,
+        Some(clash_api::ConfigEnum::Known(LogLevel::Debug))
+    );
+    assert_eq!(config.allow_lan, Some(false));
 
     client
         .patch_config(&ConfigPatch {
@@ -366,7 +372,7 @@ async fn real_mihomo_api_and_transport_matrix() {
         })
         .await
         .unwrap();
-    assert!(client.configs().await.unwrap().allow_lan);
+    assert_eq!(client.configs().await.unwrap().allow_lan, Some(true));
 
     assert_proxy_and_rule_apis(&client, &healthcheck_url).await;
     assert_dns_and_storage_apis(&client).await;

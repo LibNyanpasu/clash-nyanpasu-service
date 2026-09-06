@@ -5,7 +5,7 @@ pub mod retry;
 pub mod stream;
 
 pub use api::{
-    BrutalOptions, Bytes, BytesPerSecond, ConfigPatch, Connection, ConnectionMetadata,
+    BrutalOptions, Bytes, BytesPerSecond, ConfigEnum, ConfigPatch, Connection, ConnectionMetadata,
     ConnectionNetwork, ConnectionStreamQuery, ConnectionType, ConnectionsSnapshot, Delay,
     DelayHistory, DelayQuery, DnsMode, DnsQuery, DnsQuestion, DnsRecord, DnsRecordType,
     DnsResponse, ExpectedStatus, FindProcessMode, GeoUrls, Hello, LogEntry, LogField, LogLevel,

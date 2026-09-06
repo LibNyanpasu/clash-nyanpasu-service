@@ -486,6 +486,25 @@ mod tests {
     }
 
     #[test]
+    fn projection_does_not_treat_absent_false_or_zero_as_observed_values() {
+        let projection = super::RuntimeProjection {
+            expected: vec![
+                (vec!["allow-lan".into()], Value::Bool(false)),
+                (
+                    vec!["mixed-port".into()],
+                    serde_yaml_ng::to_value(0).unwrap(),
+                ),
+            ],
+        };
+        let missing = serde_yaml_ng::from_str::<clash_api::RuntimeConfig>("{}").unwrap();
+        assert!(!projection.verify(&missing).unwrap());
+        let present =
+            serde_yaml_ng::from_str::<clash_api::RuntimeConfig>("allow-lan: false\nmixed-port: 0")
+                .unwrap();
+        assert!(projection.verify(&present).unwrap());
+    }
+
+    #[test]
     fn patch_reload_and_switch_are_deny_by_default() {
         assert!(matches!(
             classify_documents(&mapping("allow-lan: false"), &mapping("allow-lan: true")).unwrap(),
