@@ -556,7 +556,8 @@ async fn assert_proxy_and_rule_apis(client: &Client, healthcheck_url: &str) {
         .iter()
         .find(|rule| rule.payload == "fixture.test")
         .unwrap()
-        .index as usize;
+        .index
+        .expect("Mihomo reports the index required by patch_rules") as usize;
     let mut patch = RulePatch::new();
     patch.set_disabled(rule_index, true);
     client.patch_rules(&patch).await.unwrap();
