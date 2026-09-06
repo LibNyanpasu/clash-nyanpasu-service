@@ -81,7 +81,7 @@ impl std::fmt::Display for ProviderName {
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, specta::Type)]
 pub struct DelayHistory {
     pub time: DateTime<FixedOffset>,
-    pub delay: u16,
+    pub delay: i64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, specta::Type)]
@@ -90,7 +90,7 @@ pub struct ProxyExtra {
     pub history: Vec<DelayHistory>,
 }
 
-/// Common and group-specific fields emitted by Mihomo's proxy wrappers.
+/// Common proxy fields with optional core-specific and group metadata.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct Proxy {
@@ -98,21 +98,32 @@ pub struct Proxy {
     #[serde(rename = "type")]
     pub proxy_type: String,
     pub history: Vec<DelayHistory>,
-    pub extra: IndexMap<String, ProxyExtra>,
-    pub alive: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extra: Option<IndexMap<String, ProxyExtra>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub alive: Option<bool>,
     pub udp: bool,
-    pub uot: bool,
-    pub xudp: bool,
-    pub tfo: bool,
-    pub mptcp: bool,
-    pub smux: bool,
-    pub interface: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub uot: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub xudp: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tfo: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mptcp: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub smux: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interface: Option<String>,
     #[serde(rename = "routing-mark")]
-    pub routing_mark: i64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub routing_mark: Option<i64>,
     #[serde(rename = "provider-name")]
-    pub provider_name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider_name: Option<String>,
     #[serde(rename = "dialer-proxy")]
-    pub dialer_proxy: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dialer_proxy: Option<String>,
     #[serde(default)]
     pub id: Option<String>,
     #[serde(default)]
@@ -131,6 +142,8 @@ pub struct Proxy {
     pub icon: Option<String>,
     #[serde(default)]
     pub empty_fallback: Option<ProxyName>,
+    #[serde(default)]
+    pub provider: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, specta::Type)]
@@ -177,9 +190,13 @@ impl VehicleType {
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, specta::Type)]
 #[serde(rename_all = "PascalCase")]
 pub struct SubscriptionInfo {
+    #[serde(default, alias = "upload")]
     pub upload: i64,
+    #[serde(default, alias = "download")]
     pub download: i64,
+    #[serde(default, alias = "total")]
     pub total: i64,
+    #[serde(default, alias = "expire")]
     pub expire: i64,
 }
 
@@ -191,8 +208,8 @@ pub struct ProxyProvider {
     pub provider_type: ProviderType,
     pub vehicle_type: VehicleType,
     pub proxies: Vec<Proxy>,
-    pub test_url: String,
-    pub expected_status: String,
+    pub test_url: Option<String>,
+    pub expected_status: Option<String>,
     #[serde(default)]
     pub updated_at: Option<DateTime<FixedOffset>>,
     #[serde(default)]
