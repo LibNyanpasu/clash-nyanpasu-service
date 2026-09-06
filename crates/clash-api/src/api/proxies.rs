@@ -133,23 +133,45 @@ pub struct Proxy {
     pub empty_fallback: Option<ProxyName>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, specta::Type)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, specta::Type)]
 pub enum ProviderType {
     Proxy,
     Rule,
-    #[serde(other)]
-    Unknown,
+    #[serde(untagged)]
+    Unknown(String),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, specta::Type)]
+impl ProviderType {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Proxy => "Proxy",
+            Self::Rule => "Rule",
+            Self::Unknown(value) => value,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, specta::Type)]
 pub enum VehicleType {
     File,
     #[serde(rename = "HTTP")]
     Http,
     Compatible,
     Inline,
-    #[serde(other)]
-    Unknown,
+    #[serde(untagged)]
+    Unknown(String),
+}
+
+impl VehicleType {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::File => "File",
+            Self::Http => "HTTP",
+            Self::Compatible => "Compatible",
+            Self::Inline => "Inline",
+            Self::Unknown(value) => value,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, specta::Type)]
