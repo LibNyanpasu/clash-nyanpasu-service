@@ -68,6 +68,21 @@ pub struct ResolvedController {
     pub secret: Option<String>,
 }
 
+/// A point-in-time API binding read under the manager control lock.
+#[derive(Clone)]
+pub struct ApiConnection {
+    pub instance_id: uuid::Uuid,
+    pub controller: ResolvedController,
+}
+
+impl std::fmt::Debug for ApiConnection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ApiConnection")
+            .field("instance_id", &self.instance_id)
+            .finish_non_exhaustive()
+    }
+}
+
 /// How the manager selects the core's primary controller transport.
 ///
 /// This is the manager's only controller knob. Local IPC means a manager-owned,

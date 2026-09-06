@@ -130,6 +130,16 @@ impl IpcOperation for CoreV2Operation {
     type Data = OperationInfo;
 }
 
+/// Internal credentials for the currently applied process, or None if stopped.
+pub struct CoreV2ApiConnection;
+
+impl IpcOperation for CoreV2ApiConnection {
+    const METHOD: Method = Method::GET;
+    const PATH: &'static str = super::core::v2::CORE_V2_API_CONNECTION_ENDPOINT;
+    type Req<'a> = ();
+    type Data = Option<super::core::v2::CoreApiConnection>;
+}
+
 /// `GET /v2/core/status`
 pub struct CoreV2Status;
 

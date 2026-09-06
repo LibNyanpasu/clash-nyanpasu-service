@@ -74,6 +74,15 @@ impl Client {
             })
     }
 
+    /// Read the applied process's API credentials over the protected IPC socket.
+    pub async fn core_api_connection(&self) -> Result<Option<api::core::v2::CoreApiConnection>> {
+        Ok(self
+            .call::<api::contract::CoreV2ApiConnection>(None)
+            .await?
+            .data
+            .flatten())
+    }
+
     /// The daemon's canonical core status projection.
     pub async fn core_status_v2(&self) -> Result<api::status::CoreInfos> {
         self.call::<CoreV2Status>(None)
@@ -182,5 +191,44 @@ impl Stream for EventStream {
 impl std::fmt::Debug for EventStream {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("EventStream").finish_non_exhaustive()
+    }
+}
+
+#[cfg(test)]
+mod api_connection_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn applied_binding_and_unavailable_binding_decode_through_the_contract() {
+        use api::{RBuilder, core::v2::CoreApiConnection, status::CoreControllerInfo};
+        use axum::{Json, Router, routing::get};
+        for connection in [
+            None,
+            Some(CoreApiConnection {
+                instance_id: "process-id".into(),
+                controller: CoreControllerInfo::Http("http://127.0.0.1:9090/".into()),
+                secret: Some("controller-secret".into()),
+            }),
+        ] {
+            let expected = connection.clone();
+            let router = Router::new().route(
+                api::core::v2::CORE_V2_API_CONNECTION_ENDPOINT,
+                get(move || {
+                    let connection = connection.clone();
+                    async move { Json(RBuilder::success(connection)) }
+                }),
+            );
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let address = listener.local_addr().unwrap();
+            let server = tokio::spawn(async move {
+                axum::serve(listener, router).await.unwrap();
+            });
+            let client = Client {
+                client: reqwest::Client::builder().no_proxy().build().unwrap(),
+                base_url: format!("http://{address}/").parse().unwrap(),
+            };
+            assert_eq!(client.core_api_connection().await.unwrap(), expected);
+            server.abort();
+        }
     }
 }

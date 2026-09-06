@@ -72,6 +72,8 @@ impl InstanceState {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InstanceStatus {
+    /// New for each OS process start, including respawn inside one epoch.
+    pub instance_id: Option<uuid::Uuid>,
     pub state: InstanceState,
     pub health: Option<HealthStatus>,
 }
@@ -79,6 +81,7 @@ pub struct InstanceStatus {
 impl InstanceStatus {
     pub(crate) fn initial() -> Self {
         Self {
+            instance_id: None,
             state: InstanceState::Starting,
             health: Some(HealthStatus::starting()),
         }
@@ -179,6 +182,8 @@ impl std::fmt::Display for RevisionId {
 /// Snapshot published on the manager's watch channel.
 #[derive(Debug, Clone)]
 pub struct CoreStatus {
+    /// Identity of the process, independent of config revision and runtime epoch.
+    pub instance_id: Option<uuid::Uuid>,
     pub state: CoreState,
     /// Unix milliseconds of the last state transition (feeds IPC `state_changed_at`).
     pub changed_at: i64,
@@ -192,6 +197,7 @@ pub struct CoreStatus {
 impl CoreStatus {
     pub(crate) fn initial() -> Self {
         Self {
+            instance_id: None,
             state: CoreState::Stopped { reason: None },
             changed_at: now_ms(),
             health: None,
