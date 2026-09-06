@@ -686,3 +686,23 @@ async fn shutdown_closes_the_v2_control_plane_to_new_work() {
     assert_eq!(envelope.error_kind.as_deref(), Some("shutting_down"));
     assert_eq!(envelope.retryable, Some(false));
 }
+
+#[tokio::test]
+async fn api_connection_is_unavailable_when_no_process_is_running() {
+    use nyanpasu_ipc::api::core::v2::{CORE_V2_API_CONNECTION_ENDPOINT, CoreApiConnection};
+    let env = TestEnv::new().await;
+    let response = create_router(env.state.clone())
+        .oneshot(
+            Request::builder()
+                .uri(CORE_V2_API_CONNECTION_ENDPOINT)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let envelope: nyanpasu_ipc::api::R<'static, Option<CoreApiConnection>> =
+        body_of(response).await;
+    assert_eq!(envelope.code, ResponseCode::Ok);
+    assert!(envelope.data.flatten().is_none());
+}

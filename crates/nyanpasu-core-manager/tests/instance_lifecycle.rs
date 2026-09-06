@@ -208,6 +208,12 @@ async fn crash_recovers_through_restart_and_reprobe() {
     let (recorder, log) = common::record_states(instance.state());
     instance.wait_ready().await.expect("initially healthy");
 
+    let original_id = instance
+        .state()
+        .borrow()
+        .instance_id
+        .expect("running process identity");
+
     // The first run crashes; the supervisor restarts; the re-probe
     // confirms the second (healthy) run.
     tokio::time::timeout(Duration::from_secs(10), async {
@@ -232,6 +238,14 @@ async fn crash_recovers_through_restart_and_reprobe() {
     })
     .await
     .expect("replacement never became ready");
+
+    let replacement_id = instance
+        .state()
+        .borrow()
+        .instance_id
+        .expect("replacement identity");
+    assert_ne!(original_id, replacement_id);
+    assert_eq!(instance.epoch(), common::epoch(1));
 
     instance.stop().await.expect("stop");
     recorder.abort();

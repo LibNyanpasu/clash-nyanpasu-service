@@ -363,6 +363,15 @@ impl CoreManagerService {
         Ok(())
     }
 
+    pub async fn api_connection(&self) -> Option<nyanpasu_ipc::api::core::v2::CoreApiConnection> {
+        let connection = self.inner.manager.api_connection().await?;
+        Some(nyanpasu_ipc::api::core::v2::CoreApiConnection {
+            instance_id: connection.instance_id.to_string(),
+            controller: map_controller(&connection.controller.host)?,
+            secret: connection.controller.secret,
+        })
+    }
+
     pub async fn status(&self) -> CoreInfos {
         project_core_infos(
             &self.inner.manager.status(),
@@ -891,6 +900,7 @@ fn same_ipc_state(previous: &CoreState, next: &CoreState) -> bool {
 /// six-state view beside it.
 fn project_core_infos(status: &CoreStatus, requested_core: Option<CoreType>) -> CoreInfos {
     CoreInfos {
+        instance_id: status.instance_id.map(|id| id.to_string()),
         r#type: requested_core,
         state: map_core_state(&status.state),
         state_changed_at: status.changed_at,
@@ -1493,6 +1503,7 @@ mod tests {
 
     fn status_of(state: ManagerCoreState) -> CoreStatus {
         CoreStatus {
+            instance_id: None,
             state,
             changed_at: 42,
             health: None,

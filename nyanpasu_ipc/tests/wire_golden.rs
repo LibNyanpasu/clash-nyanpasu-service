@@ -67,6 +67,7 @@ where
 /// that fell behind.
 fn enriched_core_infos() -> CoreInfos {
     CoreInfos {
+        instance_id: None,
         r#type: Some(CoreType::Clash(ClashCoreType::Mihomo)),
         state: CoreState::Running,
         state_changed_at: 42,
@@ -97,6 +98,7 @@ fn enriched_core_infos() -> CoreInfos {
 /// A never-started core: every S7 field absent, `detail` still populated.
 fn minimal_core_infos() -> CoreInfos {
     CoreInfos {
+        instance_id: None,
         r#type: None,
         state: CoreState::Stopped(None),
         state_changed_at: 42,
@@ -312,6 +314,7 @@ fn the_status_response_is_pinned() {
     let body = StatusResBody {
         version: Cow::Borrowed("9.9.9-golden"),
         core_infos: CoreInfos {
+            instance_id: None,
             r#type: Some(CoreType::Clash(ClashCoreType::Mihomo)),
             state: CoreState::Running,
             state_changed_at: 42,
@@ -580,6 +583,7 @@ fn the_enriched_status_response_is_pinned() {
     let body = StatusResBody {
         version: Cow::Borrowed("9.9.9-golden"),
         core_infos: CoreInfos {
+            instance_id: None,
             r#type: Some(CoreType::Clash(ClashCoreType::Mihomo)),
             state: CoreState::Running,
             state_changed_at: 42,

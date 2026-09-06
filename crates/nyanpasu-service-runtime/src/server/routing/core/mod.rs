@@ -19,4 +19,8 @@ pub fn setup() -> Router<AppState> {
         .register(CoreV2Submit, v2::submit)
         .register(CoreV2Operation, v2::operation)
         .register(CoreV2Status, v2::status)
+        .register(
+            nyanpasu_ipc::api::contract::CoreV2ApiConnection,
+            v2::api_connection,
+        )
 }

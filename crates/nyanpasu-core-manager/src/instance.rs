@@ -67,6 +67,7 @@ impl Shared {
             status.state = state.clone();
             if matches!(state, InstanceState::Stopping | InstanceState::Stopped(_)) {
                 status.health = None;
+                status.instance_id = None;
             }
         });
     }
@@ -602,6 +603,7 @@ async fn monitor_loop(args: MonitorLoopArgs) {
                     let previous_health = shared.state_tx.borrow().health.clone();
                     let lifecycle = shared.state_tx.borrow().state.clone();
                     shared.publish_status(InstanceStatus {
+                        instance_id: Some(uuid::Uuid::new_v4()),
                         state: lifecycle,
                         health: Some(reset_starting_health(previous_health.as_ref())),
                     });
@@ -633,6 +635,7 @@ async fn monitor_loop(args: MonitorLoopArgs) {
                     respawn_deadline = None;
                     let previous_health = shared.state_tx.borrow().health.clone();
                     shared.publish_status(InstanceStatus {
+                        instance_id: None,
                         state: InstanceState::Restarting { attempt },
                         health: Some(reset_starting_health(previous_health.as_ref())),
                     });
@@ -646,6 +649,7 @@ async fn monitor_loop(args: MonitorLoopArgs) {
                 Some(SupervisorEvent::GaveUp) => {
                     stop_probe_driver(&mut driver).await;
                     shared.publish_status(InstanceStatus {
+                        instance_id: None,
                         state: InstanceState::Stopped(StopReason::Error(format!(
                         "core kept crashing; restart budget exhausted\n{}",
                         shared.diagnostics()
@@ -811,7 +815,9 @@ impl ProbeReconcile<'_> {
                     driver.use_liveness();
                 }
                 let previous = self.shared.state_tx.borrow().health.clone();
+                let instance_id = self.shared.state_tx.borrow().instance_id;
                 self.shared.publish_status(InstanceStatus {
+                    instance_id,
                     state: InstanceState::Running { pid },
                     health: Some(health_status(previous.as_ref(), &update, &observation)),
                 });
@@ -820,8 +826,10 @@ impl ProbeReconcile<'_> {
         }
 
         let previous = self.shared.state_tx.borrow().health.clone();
+        let instance_id = self.shared.state_tx.borrow().instance_id;
         let lifecycle = self.shared.state_tx.borrow().state.clone();
         self.shared.publish_status(InstanceStatus {
+            instance_id,
             state: lifecycle,
             health: Some(health_status(previous.as_ref(), &update, &observation)),
         });
@@ -903,6 +911,7 @@ fn publish_terminal(shared: &Shared, last_exit: Option<&TerminatedPayload>) {
         ))
     };
     let _ = shared.state_tx.send(InstanceStatus {
+        instance_id: None,
         state: InstanceState::Stopped(reason),
         health: None,
     });

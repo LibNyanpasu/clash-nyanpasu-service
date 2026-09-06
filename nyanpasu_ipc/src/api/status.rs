@@ -21,9 +21,9 @@ impl Default for CoreState {
 ///
 /// A deliberately separate type from `clash_api::Host`: clash-api is an
 /// internal dependency of the core manager and must not leak into the wire
-/// dependency tree. The controller secret is never carried here — it comes
-/// from the caller's own config, and the IPC transport's only gate is the
-/// socket ACL.
+/// dependency tree. The controller secret is never carried here. Clients read
+/// applied credentials through the private `/v2/core/api-connection` endpoint;
+/// the IPC transport's authorization gate is the socket ACL.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 pub enum CoreControllerInfo {
@@ -124,6 +124,8 @@ pub enum CoreStateDetail {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 pub struct CoreInfos {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub instance_id: Option<String>,
     pub r#type: Option<nyanpasu_utils::core::CoreType>,
     pub state: CoreState,
     pub state_changed_at: i64,

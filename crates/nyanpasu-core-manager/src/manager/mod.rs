@@ -389,6 +389,20 @@ impl CoreManager {
         self.inner.log_dir.as_deref()
     }
 
+    /// Read credentials from the applied plan, never from a desired config.
+    pub async fn api_connection(&self) -> Option<crate::ApiConnection> {
+        let ctrl = self.inner.ctrl.lock().await;
+        let active = ctrl.current.as_ref()?;
+        let snapshot = active.instance.state().borrow().clone();
+        if !matches!(snapshot.state, crate::InstanceState::Running { .. }) {
+            return None;
+        }
+        Some(crate::ApiConnection {
+            instance_id: snapshot.instance_id?,
+            controller: active.plan.controller.clone(),
+        })
+    }
+
     pub fn status(&self) -> CoreStatus {
         self.inner.status_tx.borrow().clone()
     }

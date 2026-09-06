@@ -246,6 +246,8 @@ async fn installed_apply_with_parent_sync_failure_reports_real_outcome() {
     let manager = manager(&dir, Duration::from_secs(1)).await;
     manager.start(spec(&dir, first)).await.expect("start");
     let before = running(&manager);
+    let api_before = manager.api_connection().await.expect("running API");
+    assert_eq!(manager.status().instance_id, Some(api_before.instance_id));
     manager.inject_runtime_parent_sync_failure_once_for_test();
 
     let outcome = manager
@@ -259,7 +261,15 @@ async fn installed_apply_with_parent_sync_failure_reports_real_outcome() {
     assert!(matches!(*outcome, ApplyOutcome::Patched { .. }));
     assert!(warning.contains("injected"), "{warning}");
     assert_eq!(running(&manager), before);
+    let api_after = manager.api_connection().await.expect("applied API");
+    assert_eq!(api_before.instance_id, api_after.instance_id);
+    assert_eq!(
+        running(&manager).0,
+        before.0,
+        "runtime epoch does not identify a process"
+    );
     manager.shutdown().await.expect("shutdown");
+    assert!(manager.api_connection().await.is_none());
 }
 
 #[tokio::test]
@@ -279,6 +289,8 @@ async fn apply_reload_uses_put_without_restarting() {
     let manager = manager(&dir, Duration::from_secs(1)).await;
     manager.start(spec(&dir, first)).await.expect("start");
     let before = running(&manager);
+    let api_before = manager.api_connection().await.expect("running API");
+    assert_eq!(manager.status().instance_id, Some(api_before.instance_id));
 
     let outcome = manager
         .apply_config(spec(&dir, desired), None)
@@ -290,7 +302,15 @@ async fn apply_reload_uses_put_without_restarting() {
         "got {outcome:?}"
     );
     assert_eq!(running(&manager), before);
+    let api_after = manager.api_connection().await.expect("applied API");
+    assert_eq!(api_before.instance_id, api_after.instance_id);
+    assert_eq!(
+        running(&manager).0,
+        before.0,
+        "runtime epoch does not identify a process"
+    );
     manager.shutdown().await.expect("shutdown");
+    assert!(manager.api_connection().await.is_none());
 }
 
 #[tokio::test]
@@ -632,6 +652,8 @@ async fn patch_success_with_get_mismatch_restarts_desired() {
     let manager = manager(&dir, Duration::from_secs(1)).await;
     manager.start(spec(&dir, first)).await.expect("start");
     let before = running(&manager);
+    let api_before = manager.api_connection().await.expect("running API");
+    assert_eq!(manager.status().instance_id, Some(api_before.instance_id));
 
     let outcome = manager
         .apply_config(spec(&dir, desired), None)
@@ -640,7 +662,15 @@ async fn patch_success_with_get_mismatch_restarts_desired() {
 
     assert!(matches!(outcome, ApplyOutcome::Restarted { .. }));
     assert_ne!(running(&manager).1, before.1);
+    let api_after = manager.api_connection().await.expect("applied API");
+    assert_ne!(api_before.instance_id, api_after.instance_id);
+    assert_eq!(
+        running(&manager).0,
+        before.0,
+        "runtime epoch does not identify a process"
+    );
     manager.shutdown().await.expect("shutdown");
+    assert!(manager.api_connection().await.is_none());
 }
 
 #[test]

@@ -205,6 +205,7 @@ fn test_status_body() -> StatusResBody<'static> {
     StatusResBody {
         version: Cow::Borrowed(TEST_VERSION),
         core_infos: CoreInfos {
+            instance_id: None,
             r#type: None,
             state: CoreState::Running,
             state_changed_at: 42,
@@ -334,6 +335,7 @@ async fn ws_handler(ws: WebSocketUpgrade) -> Response {
 /// restarting.
 fn test_snapshot() -> CoreInfos {
     CoreInfos {
+        instance_id: None,
         r#type: Some(CoreType::Clash(ClashCoreType::Mihomo)),
         state: CoreState::Stopped(None),
         state_changed_at: 42,

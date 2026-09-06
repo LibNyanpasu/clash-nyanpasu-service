@@ -53,6 +53,7 @@ impl RuntimeBackend for FakeBackend {
                 "injected launch panic"
             );
             let (state_tx, _) = watch::channel(InstanceStatus {
+                instance_id: None,
                 state: InstanceState::Starting,
                 health: None,
             });
@@ -104,6 +105,7 @@ impl RuntimeInstance for FakeInstance {
     fn wait_ready<'a>(&'a self) -> BoxFuture<'a, Result<(), Error>> {
         Box::pin(async move {
             let _ = self.state_tx.send(InstanceStatus {
+                instance_id: None,
                 state: InstanceState::Running { pid: 0 },
                 health: None,
             });
@@ -126,6 +128,7 @@ impl RuntimeInstance for FakeInstance {
                 ));
             }
             let _ = self.state_tx.send(InstanceStatus {
+                instance_id: None,
                 state: InstanceState::Stopped(StopReason::User),
                 health: None,
             });
