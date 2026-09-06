@@ -188,3 +188,45 @@ async fn externally_mutating_maintenance_calls_have_the_expected_routes_and_quer
     client.update_geo_databases().await.unwrap();
     server.abort();
 }
+
+#[tokio::test]
+async fn rules_accept_absent_extensions_but_reject_malformed_fields() {
+    for (body, valid) in [
+        (
+            serde_json::json!({"type":"Domain","payload":"example.com","proxy":"DIRECT"}),
+            true,
+        ),
+        (
+            serde_json::json!({"type":"Domain","payload":"example.com","proxy":"DIRECT","index":0,"size":0}),
+            true,
+        ),
+        (
+            serde_json::json!({"type":"Domain","payload":"example.com","proxy":"DIRECT","index":"bad"}),
+            false,
+        ),
+        (
+            serde_json::json!({"type":"Domain","payload":"example.com"}),
+            false,
+        ),
+    ] {
+        let expected_index = body.get("index").and_then(serde_json::Value::as_i64);
+        let expected_size = body.get("size").and_then(serde_json::Value::as_i64);
+        let app = Router::new().route(
+            "/rules/",
+            get(move || async move { Json(serde_json::json!({"rules":[body]})) }),
+        );
+        let (address, server) = spawn_server(app).await;
+        let client = Client::builder(Host::http(address).unwrap())
+            .build()
+            .unwrap();
+        let result = client.rules().await;
+        assert_eq!(result.is_ok(), valid);
+        if valid {
+            let rules = result.unwrap();
+            assert_eq!(rules[0].index, expected_index);
+            assert_eq!(rules[0].size, expected_size);
+            assert_eq!(rules[0].proxy, "DIRECT");
+        }
+        server.abort();
+    }
+}

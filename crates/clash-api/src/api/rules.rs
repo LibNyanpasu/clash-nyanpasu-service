@@ -8,12 +8,15 @@ use crate::{Client, ProviderType, Result, VehicleType, retry::RequestMetadata};
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, specta::Type)]
 pub struct Rule {
-    pub index: i64,
+    /// Core-specific rule index; absence must not be treated as index zero.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub index: Option<i64>,
     #[serde(rename = "type")]
     pub rule_type: String,
     pub payload: String,
     pub proxy: String,
-    pub size: i64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size: Option<i64>,
     #[serde(default)]
     pub extra: Option<RuleExtra>,
 }
