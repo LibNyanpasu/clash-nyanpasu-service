@@ -329,3 +329,50 @@ fn config_response_validation_does_not_widen_writes_or_subscriptions() {
         Some(clash_api::ConfigEnum::Known(clash_api::LogLevel::Info))
     );
 }
+
+#[tokio::test]
+async fn proxy_lists_accept_base_nodes_and_partial_subscription_usage() {
+    let app = Router::new()
+        .route("/proxies/", get(|| async { Json(serde_json::json!({"proxies":{
+            "node":{"name":"node","type":"Vless","udp":true,"history":[{"time":"2026-09-07T00:00:00Z","delay":-1}]}
+        }})) }))
+        .route("/providers/proxies/", get(|| async { Json(serde_json::json!({"providers":{
+            "p":{"name":"p","type":"FutureProxy","vehicleType":"FutureTransport","proxies":[],"subscriptionInfo":{"Expire":123,"upload":5}}
+        }})) }));
+    let (address, server) = spawn_server(app).await;
+    let client = Client::builder(Host::http(address).unwrap())
+        .build()
+        .unwrap();
+    let proxies = client.proxies().await.unwrap();
+    let proxy = &proxies[&ProxyName::from("node")];
+    assert_eq!(proxy.alive, None);
+    assert_eq!(proxy.xudp, None);
+    assert_eq!(proxy.history[0].delay, -1);
+    let providers = client.proxy_providers().await.unwrap();
+    let provider = &providers[&ProviderName::from("p")];
+    assert_eq!(provider.test_url, None);
+    assert_eq!(provider.expected_status, None);
+    assert_eq!(provider.provider_type.as_str(), "FutureProxy");
+    assert_eq!(provider.vehicle_type.as_str(), "FutureTransport");
+    let usage = provider.subscription_info.as_ref().unwrap();
+    assert_eq!(
+        (usage.upload, usage.download, usage.total, usage.expire),
+        (5, 0, 0, 123)
+    );
+    server.abort();
+}
+
+#[test]
+fn proxy_metadata_still_rejects_malformed_present_values() {
+    for field in ["alive", "xudp", "tfo"] {
+        let mut body = serde_json::json!({"name":"p","type":"Direct","udp":true,"history":[]});
+        body[field] = serde_json::json!("yes");
+        assert!(serde_json::from_value::<clash_api::Proxy>(body).is_err());
+    }
+    assert!(
+        serde_json::from_value::<clash_api::Proxy>(
+            serde_json::json!({"name":"p","type":"Direct","history":[]})
+        )
+        .is_err()
+    );
+}
