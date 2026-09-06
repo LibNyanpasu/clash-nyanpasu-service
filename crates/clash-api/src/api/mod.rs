@@ -11,7 +11,7 @@ mod traffic;
 mod version;
 
 pub use configs::{
-    BrutalOptions, ConfigPatch, FindProcessMode, GeoUrls, MuxOptions, RuntimeConfig,
+    BrutalOptions, ConfigEnum, ConfigPatch, FindProcessMode, GeoUrls, MuxOptions, RuntimeConfig,
     RuntimeTuicServer, RuntimeTun, TuicServerPatch, TunPatch, TunStack, TunnelMode,
     UpdateConfigOptions, UpdateConfigRequest,
 };
