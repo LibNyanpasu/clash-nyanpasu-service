@@ -230,3 +230,53 @@ async fn rules_accept_absent_extensions_but_reject_malformed_fields() {
         server.abort();
     }
 }
+
+#[tokio::test]
+async fn rule_providers_preserve_missing_metadata_unknown_strings_and_order() {
+    let app = Router::new().route("/providers/rules/", get(|| async {
+        axum::response::Response::builder().header("content-type", "application/json")
+            .body(axum::body::Body::from(r#"{"providers":{"z":{"name":"z"},"a":{"name":"a","behavior":"FutureBehavior","format":"FutureFormat","type":"FutureType","vehicleType":"FutureVehicle","ruleCount":0,"updatedAt":"2026-09-07T10:00:00+08:00"},"known":{"name":"known","behavior":"IPCIDR","format":"MrsRule","type":"Rule","vehicleType":"HTTP"}}}"#)).unwrap()
+    }));
+    let (address, server) = spawn_server(app).await;
+    let client = Client::builder(Host::http(address).unwrap())
+        .build()
+        .unwrap();
+    let providers = client.rule_providers().await.unwrap();
+    assert_eq!(
+        providers
+            .keys()
+            .map(|name| name.as_str())
+            .collect::<Vec<_>>(),
+        ["z", "a", "known"]
+    );
+    let minimal = &providers[&clash_api::RuleProviderName::from("z")];
+    assert_eq!(
+        serde_json::to_value(minimal).unwrap(),
+        serde_json::json!({"name":"z","payload":null})
+    );
+    let future = &providers[&clash_api::RuleProviderName::from("a")];
+    assert_eq!(future.behavior.as_ref().unwrap().as_str(), "FutureBehavior");
+    assert_eq!(future.format.as_ref().unwrap().as_str(), "FutureFormat");
+    assert_eq!(
+        future.provider_type.as_ref().unwrap().as_str(),
+        "FutureType"
+    );
+    assert_eq!(
+        future.vehicle_type.as_ref().unwrap().as_str(),
+        "FutureVehicle"
+    );
+    let wire = serde_json::to_value(future).unwrap();
+    assert_eq!(wire["behavior"], "FutureBehavior");
+    assert_eq!(wire["format"], "FutureFormat");
+    assert_eq!(wire["type"], "FutureType");
+    assert_eq!(wire["vehicleType"], "FutureVehicle");
+    let known = &providers[&clash_api::RuleProviderName::from("known")];
+    assert_eq!(
+        known.behavior,
+        Some(clash_api::RuleProviderBehavior::IpCidr)
+    );
+    assert_eq!(known.format, Some(clash_api::RuleFormat::MrsRule));
+    assert_eq!(known.provider_type, Some(clash_api::ProviderType::Rule));
+    assert_eq!(known.vehicle_type, Some(clash_api::VehicleType::Http));
+    server.abort();
+}
