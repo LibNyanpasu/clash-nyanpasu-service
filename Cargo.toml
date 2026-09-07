@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+  "crates/nyanpasu-jobs",
   "crates/clash-api",
   "crates/nyanpasu-core-manager",
   "crates/nyanpasu-core-metadata",
