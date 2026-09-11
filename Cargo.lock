@@ -2127,6 +2127,7 @@ dependencies = [
  "indexmap",
  "interprocess",
  "nyanpasu-core-metadata",
+ "nyanpasu-logging",
  "nyanpasu-utils",
  "reqwest",
  "reqwest-websocket",
@@ -2162,7 +2163,7 @@ dependencies = [
 
 [[package]]
 name = "nyanpasu-service"
-version = "2.0.0-rc.5"
+version = "2.0.0-rc.6"
 dependencies = [
  "nyanpasu-service-runtime",
  "nyanpasu-utils",
@@ -2174,7 +2175,7 @@ dependencies = [
 
 [[package]]
 name = "nyanpasu-service-runtime"
-version = "2.0.0-rc.5"
+version = "2.0.0-rc.6"
 dependencies = [
  "ansi-str",
  "anyhow",
@@ -2194,6 +2195,7 @@ dependencies = [
  "libc",
  "nyanpasu-core-manager",
  "nyanpasu-ipc",
+ "nyanpasu-logging",
  "nyanpasu-utils",
  "oneshot",
  "parking_lot",
