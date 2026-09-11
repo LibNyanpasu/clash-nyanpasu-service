@@ -1,7 +1,7 @@
-use std::{collections::VecDeque, hash::BuildHasherDefault};
+use std::collections::VecDeque;
 
+use gxhash::{GxBuildHasher, HashMap};
 use lasso::{Rodeo, Spur};
-use rustc_hash::{FxHashMap, FxHasher};
 use serde::{Deserialize, Serialize};
 
 pub const MAX_WINDOW: u64 = 32 * 1024 * 1024;
@@ -89,8 +89,8 @@ pub struct Scan {
 /// Owned by one actor. The pool is rebuilt with retained entries after eviction.
 pub struct Index {
     entries: VecDeque<Entry>,
-    targets: Rodeo<Spur, BuildHasherDefault<FxHasher>>,
-    postings: FxHashMap<Spur, Vec<u64>>,
+    targets: Rodeo<Spur, GxBuildHasher>,
+    postings: HashMap<Spur, Vec<u64>>,
     levels: [Vec<u64>; 7],
     target_bytes: usize,
     pending: Vec<u8>,
@@ -109,7 +109,7 @@ impl Index {
         Self {
             entries: VecDeque::new(),
             targets: Rodeo::with_hasher(Default::default()),
-            postings: FxHashMap::default(),
+            postings: HashMap::default(),
             levels: Default::default(),
             target_bytes: 0,
             pending: Vec::new(),
@@ -225,8 +225,8 @@ impl Index {
         }
         if removed {
             self.partial = true;
-            let mut pool = Rodeo::with_hasher(BuildHasherDefault::<FxHasher>::default());
-            let mut postings: FxHashMap<Spur, Vec<u64>> = FxHashMap::default();
+            let mut pool = Rodeo::with_hasher(GxBuildHasher::default());
+            let mut postings: HashMap<Spur, Vec<u64>> = HashMap::default();
             let mut bytes = 0;
             self.levels = Default::default();
             for entry in &mut self.entries {

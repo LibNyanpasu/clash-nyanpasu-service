@@ -1,7 +1,7 @@
 use crate::*;
+use gxhash::HashMap;
 use ractor::{Actor, ActorProcessingErr, ActorRef, RpcReplyPort, rpc::CallResult};
 use std::{
-    collections::HashMap,
     sync::Arc,
     time::{Duration, Instant},
 };
@@ -171,7 +171,7 @@ struct LogsActor;
 impl State {
     fn reap(&mut self) {
         let now = self.clock.millis();
-        let mut expired = HashMap::<String, u64>::new();
+        let mut expired = HashMap::<String, u64>::default();
         self.sessions.retain(|_, session| {
             if session.expires <= now {
                 expired
@@ -256,8 +256,8 @@ impl Actor for LogsActor {
         Ok(State {
             files,
             clock,
-            sessions: HashMap::new(),
-            slots: HashMap::new(),
+            sessions: HashMap::default(),
+            slots: HashMap::default(),
             timer: None,
         })
     }
