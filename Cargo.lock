@@ -2092,9 +2092,11 @@ dependencies = [
  "chrono",
  "clash-api",
  "enumset",
+ "futures-util",
  "nyanpasu-core-manager",
  "nyanpasu-core-metadata",
  "nyanpasu-utils",
+ "nyanpasu-windows-security",
  "parking_lot",
  "schemars",
  "serde",
@@ -2107,6 +2109,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "uuid",
+ "windows 0.62.2",
  "zerocopy",
 ]
 
@@ -2138,6 +2141,7 @@ dependencies = [
  "nyanpasu-core-metadata",
  "nyanpasu-logging",
  "nyanpasu-utils",
+ "nyanpasu-windows-security",
  "reqwest",
  "reqwest-websocket",
  "serde",
@@ -2206,6 +2210,7 @@ dependencies = [
  "nyanpasu-ipc",
  "nyanpasu-logging",
  "nyanpasu-utils",
+ "nyanpasu-windows-security",
  "oneshot",
  "parking_lot",
  "rustc_version",
@@ -2263,6 +2268,15 @@ dependencies = [
  "tokio-util",
  "tracing",
  "tracing-attributes",
+ "windows 0.62.2",
+]
+
+[[package]]
+name = "nyanpasu-windows-security"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "tokio",
  "windows 0.62.2",
 ]
 

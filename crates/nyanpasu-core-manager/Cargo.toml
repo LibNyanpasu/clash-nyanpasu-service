@@ -43,3 +43,10 @@ tempfile = "3"
 [features]
 default = []
 test-hooks = []
+
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = ["Win32_Security_Authorization"] }
+
+[target.'cfg(windows)'.dev-dependencies]
+futures-util.workspace = true
+nyanpasu-windows-security = { path = "../nyanpasu-windows-security" }
