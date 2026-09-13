@@ -50,6 +50,6 @@ serde_json = "1"
 windows = { workspace = true }
 
 [features]
-client = ["dep:futures-util", "dep:reqwest", "dep:reqwest-websocket"]
+client = ["dep:futures-util", "dep:reqwest", "dep:reqwest-websocket", "nyanpasu-utils/reqwest"]
 server = ["dep:axum", "dep:axum-extra", "dep:tower", "dep:widestring"]
 specta = ["dep:specta", "nyanpasu-utils/specta", "nyanpasu-logging/specta"]
