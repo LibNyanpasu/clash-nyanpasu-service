@@ -18,8 +18,8 @@ pub type Result<T> = std::result::Result<T, ClientError>;
 /// Synthetic base URL for requests over the local IPC transport.
 ///
 /// Requests travel over a named pipe or unix socket; the HTTP authority is
-/// only there to satisfy the protocol, nothing is routed by it.
-const LOCAL_TRANSPORT_BASE_URL: &str = "http://localhost/";
+/// only there to identify nyanpasu-service in logs, nothing is routed by it.
+const LOCAL_TRANSPORT_BASE_URL: &str = "http://nyanpasu-service.localipc/";
 
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
